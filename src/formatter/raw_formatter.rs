@@ -1,5 +1,7 @@
 use std::{collections::HashMap, fs};
 
+use chrono::NaiveDateTime;
+
 use crate::input_file::InputFile;
 
 use super::Formatter;
@@ -41,7 +43,25 @@ impl<'a> Formatter for RawFormatter<'a> {
             }
         }
         // Sort and add previous data
-        list.sort();
+        list.sort_by(|a, b| {
+            let a_str = a.split(";").next().unwrap();
+            let b_str = b.split(";").next().unwrap();
+            let date_time_a = match NaiveDateTime::parse_from_str(&a_str, "%d-%m-%Y %H:%M:%S") {
+                Ok(d) => d,
+                Err(e) => {
+                    println!("Error : {} on {}", e.to_owned(), a_str);
+                    panic!();
+                }
+            };
+            let date_time_b = match NaiveDateTime::parse_from_str(&b_str, "%d-%m-%Y %H:%M:%S") {
+                Ok(d) => d,
+                Err(e) => {
+                    println!("Error : {} on {}", e.to_owned(), b_str);
+                    panic!();
+                }
+            };
+            return date_time_a.cmp(&date_time_b);
+        });
         let mut prev_data = HashMap::new();
         for (idx, _) in device_found.iter().enumerate() {
             prev_data.insert(idx, "0".to_string());

@@ -1,8 +1,11 @@
 use std::{
+    cmp::Ordering,
     fs::File,
     io::{BufRead, BufReader},
     path::PathBuf,
 };
+
+use chrono::{Date, NaiveDate};
 
 use crate::{error::ParsingError, event_data::EventData};
 
@@ -40,7 +43,11 @@ impl TryFrom<PathBuf> for InputFile {
             }
             None => return Err(ParsingError::new("Cannot fetch date from file name")),
         };
-        let date_str = date_str_raw.replace("_", "-");
+        let mut raw = date_str_raw.split("_");
+        let day = raw.next().unwrap();
+        let month = raw.next().unwrap();
+        let year = format!("20{}", raw.next().unwrap());
+        let date_str = format!("{}-{}-{}", day, month, year);
         let device = match name_splitted.pop() {
             Some(d) => d,
             None => return Err(ParsingError::new("Cannot fetch device id from file name")),
@@ -67,7 +74,7 @@ impl InputFile {
         return Self {
             gateway: gateway_id.to_string(),
             device: device.to_string(),
-            date: date.to_string(),
+            date: date.to_owned(),
             events: Vec::new(),
         };
     }
